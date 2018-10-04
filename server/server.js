@@ -37,6 +37,20 @@ app.get('/Home',(req, res) => {
   });
 });
 
+app.get('/diagnostic',(req, res) => {
+  res.render('diagnostic.hbs', {
+    pageTitle: 'Diagnostic Page',
+    currentYear: new Date().getFullYear()
+  });
+});
+
+app.get('/history',(req, res) => {
+  res.render('history.hbs', {
+    pageTitle: 'History Page',
+    currentYear: new Date().getFullYear()
+  });
+});
+
 server.listen(port,() => {
   console.log(`Server is up on ${port}`);
 });
