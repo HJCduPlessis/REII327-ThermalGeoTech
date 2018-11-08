@@ -13,8 +13,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-iot-device-sdk": "^2.2.1",
+    "aws-mqtt": "^0.2.2",
+    "aws-sdk": "^2.350.0",
+    "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "hbs": "^4.0.1",
+    "install": "^0.12.1",
+    "mongodb": "^3.1.8",
+    "mongoose": "^5.3.8",
+    "npm": "^6.4.1",
     "socket.io": "^2.1.1"
+  },
+  "devDependencies": {
+    "ws": "3.3.2"
   }
 }

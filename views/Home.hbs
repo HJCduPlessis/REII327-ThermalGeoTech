@@ -2,15 +2,45 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, intitial-scale=1, user-scalble=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="/css/bootsrap.min.css">
+  <link rel="stylesheet" href="/css/carousel.css">
+  <link rel="stylesheet" href="/css/styles.css">
   <title>Home Page</title>
 </head>
 <body>
   {{> header}}
-  <p>This the home Page</p>
+  <div>
+   <h1>This the home Page</h1>
+
+   <table style="width:100%">
+     <tr>
+       <th>selected temperature</th>
+       <th>Current temperature</th>
+       <th>System mode</th>
+       <th>System state</th>
+       <th>System current usage</th>
+     </tr>
+     <tr>
+       <td>55 &ordm; C</td>
+       <td>55 &ordm; C</td>
+       <td>Automatic</td>
+       <td>On</td>
+       <td>10 A</td>
+     </tr>
+   </table>
+
+
+   <form id="Settings">
+     <input type="text" name="Temperature" placeholder="Temp"/>
+     <input  type="submit" name="button" value="Update"/>
+   </form>
+ </div>
+
 <!-- This path is relative to ourer server.
 The next command we are loading the labary. This will be used to inithate a connection-->
   {{> footer}}
-  <script src="/socket.io/socket.io.js"></script>
+  {{> script}}
+  <script src="/js/home.js"></script>
 </body>
 </html>

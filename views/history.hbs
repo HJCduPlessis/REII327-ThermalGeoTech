@@ -2,15 +2,22 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, intitial-scale=1, user-scalble=no">
-  <title>Home Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/bootsrap.min.css">
+  <link rel="stylesheet" href="/css/carousel.css">
+  <title>History Page</title>
 </head>
 <body>
   {{> header}}
-  <p>This the home Page</p>
+  <div>
+   <p>This the History Page</p>
+ </div>
 <!-- This path is relative to ourer server.
 The next command we are loading the labary. This will be used to inithate a connection-->
   {{> footer}}
-  <script src="/socket.io/socket.io.js"></script>
+  {{> script}}
+  <script src="/js/history.js"></script>
+
 </body>
 </html>
