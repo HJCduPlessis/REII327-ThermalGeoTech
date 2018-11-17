@@ -12,12 +12,24 @@
   {{> header}}
   <div>
    <p>This the History Page</p>
+   <form id="ChosenData">
+     <input type="text" name="FirstDate" placeholder="2018-11-09"/>
+     <input type="text" name="SecondDate" placeholder="2018-11-10"/>
+     <input  type="submit" name="button" value="Search"/>
+   </form>
+
  </div>
 <!-- This path is relative to ourer server.
 The next command we are loading the labary. This will be used to inithate a connection-->
-  {{> footer}}
-  {{> script}}
+<div class="chart-container" style="position: relative; height:20vh; width:50vw">
+    <canvas id="lineChart"></canvas>
+</div>
+{{> footer}}
+{{> script}}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js"></script>
   <script src="/js/history.js"></script>
+
 
 </body>
 </html>

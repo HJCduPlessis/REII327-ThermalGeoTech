@@ -10,15 +10,9 @@ const socketIO = require('socket.io');
  var {mongoose} = require('./db/mongoose');
  var {NewData} = require('./models/newdata');
  var {User} = require('./models/users');
+ var {DataSetting} = require('./models/datasetting');
  var awsIot = require('aws-iot-device-sdk');
 
-//
-// Replace the values of '<YourUniqueClientIdentifier>' and '<YourCustomEndpoint>'
-// with a unique client identifier and custom host endpoint provided in AWS IoT cloud
-// NOTE: client identifiers must be unique within your AWS account; if a client attempts
-// to connect with a client identifier which is already in use, the existing
-// connection will be terminated.
-//
 var thingShadows = awsIot.thingShadow({
    keyPath: 'server/56eab5f35a-private.pem.key',
   certPath: 'server/56eab5f35a-certificate.pem.crt',
@@ -26,40 +20,22 @@ var thingShadows = awsIot.thingShadow({
   clientId: 'Hennie',
       host: 'axvtt5lr7rbu1-ats.iot.us-east-1.amazonaws.com'
 });
-// Client token value returned from thingShadows.update() operation
-//
+
  var clientTokenUpdate;
-//
-// //
-// // Simulated device values
-// //
 
 thingShadows.on('connect', function() {
-    thingShadows.register( 'ThermoGeotechPi', {}, function() {
-   var rgbLedLampState = {"state":{"desired":{"SetTemperature":55,"SelfTestInvoked":true,"SystemState":true}}};
-   clientTokenUpdate = thingShadows.update('ThermoGeotechPi', rgbLedLampState  );
+thingShadows.register('ThermoGeotechPi',{},function(){
+});
+});
 
-   if (clientTokenUpdate === null)
-       {
-          console.log('update shadow failed, operation still in progress');
-       }
-});
-});
 thingShadows.on('status',
     function(thingName, stat, clientToken, stateObject) {
-       console.log('received '+stat+' on '+thingName+': '+JSON.stringify(stateObject));
-
-//
-// These events report the status of update(), get(), and delete()
-// calls.  The clientToken value associated with the event will have
-// the same value which was returned in an earlier call to get(),
-// update(), or delete().  Use status events to keep track of the
-// status of shadow operations.
+      // console.log('received '+stat+' on '+thingName+': '+JSON.stringify(stateObject));
 //
     });
 thingShadows.on('delta',
     function(thingName, stateObject) {
-       console.log('received delta on '+thingName+': '+JSON.stringify(stateObject));
+      // console.log('received delta on '+thingName+': '+JSON.stringify(stateObject));
 
 
     });
@@ -72,34 +48,6 @@ thingShadows.on('timeout',
 
     });
 
-    thingShadows.on('foreignStateChange',
-    function (thingName, operation, stateObject) {
-    console.log('received on '+thingName+':'+JSON.stringify(stateObject));
-    console.log('');
-    var {state} = stateObject;
-    if(state != null)
-    {
-      var {reported} = state;
-      var {Temperature} = reported;
-      var {Current} = reported;
-      var {SelfTestInvoked} = reported;
-      var {SystemState} = reported;
-      var {SendDataAt} = reported;
-      var newd = new NewData({
-      Temperature: Temperature,
-      Current: Current,
-      SelfTestInvoked: SelfTestInvoked,
-      SystemState: SystemState,
-      SendDataAt: SendDataAt
-    });
-      newd.save().then((doc) => {
-        console.log('test');
-      },(e) => {
-      console.log('b');
-      });
-    }
-
-  });
 //Set path that will call the public files
 const publicPath = path.join(__dirname, '../public');
 const viewPath = path.join(__dirname, '../views/partials');
@@ -120,7 +68,6 @@ app.use(express.static(publicPath)); // What the remote user have acces
 // Call a method
 io.on('connection', (socket) => {
   console.log(`New user connected`);
-
   socket.on('disconnect', () => {
     console.log('User was disconnect');
   });
@@ -133,20 +80,141 @@ io.on('connection', (socket) => {
   socket.on('SelfTestEnvoked',(STE) => {
     console.log('SelfTestEnvoked', STE);
 });
+
 socket.on('AutoMaticMode',(AMM) => {
-  console.log('AutoMaticMode', AMM);
+  var oldMode;
+  DataSetting.find().sort({_id:-1}).limit(1).then((doc) => {
+    var tempd = doc[0];
+    var {SystemState} = tempd;
+    var {_id} = tempd;
+    oldMode = SystemState;
+    //console.log(oldMode);
+    var {mode} =AMM;
+    var newcount =0;
+    var oldcount = 0;
+    if(mode){newcount =1}
+    if(oldMode){oldcount = 1}
+    if(oldcount != newcount){
+
+       var modeg = {"state":{"desired":{"SystemState":mode}}};
+       console.log(mode);
+       clientTokenUpdate = thingShadows.update('ThermoGeotechPi', modeg);
+       if (clientTokenUpdate === null)
+       {
+          console.log('update shadow failed, operation still in progress');
+       }
+     DataSetting.findOneAndUpdate({
+       _id: _id
+     },{
+       $set: {
+         SystemState: mode
+       }
+     },{
+      returnOriginal: false
+    }).then((result) => {
+      console.log(result);
+    });
+    }
+  });
+
+
 });
-socket.on('NewDataArrive',(NDA) =>{
-  console.log(NDA);
+socket.on('HistorySearch',(HS) =>{
+  console.log(HS);
 });
 socket.on('ChangeData',(CD) =>{
   console.log(CD);
+  var value;
+  var {ValueSet} = CD;
+  value =ValueSet;
+
+  var modeg = {"state":{"desired":{"SetTemperature":parseInt(ValueSet, 10)}}};
+  console.log(value);
+  clientTokenUpdate = thingShadows.update('ThermoGeotechPi', modeg);
+  if (clientTokenUpdate === null)
+  {
+     console.log('update shadow failed, operation still in progress');
+  }
+  DataSetting.find().sort({_id:-1}).limit(1).then((doc) => {
+    var tempd = doc[0];
+    var {_id} = tempd;
+    DataSetting.findOneAndUpdate({
+      _id: _id
+    },{
+      $set: {
+        SetTemperature: value
+      }
+    },{
+     returnOriginal: false
+   }).then((result) => {
+     console.log(result);
+   });
+  });
 });
 }); //Lets register an event lisiner.
+
+thingShadows.on('foreignStateChange',
+function (thingName, operation, stateObject) {
+// console.log('received on '+thingName+':'+JSON.stringify(stateObject));
+// console.log('');
+
+var {state} = stateObject;
+var {reported} = state;
+var {desired} = state;
+if(state != null && reported != null)
+{
+
+  var {Temperature} = reported;
+  // t1 =Temperature;
+  var {Current} = reported;
+  var {SelfTestInvoked} = reported;
+  var {SystemState} = reported;
+  var {SendDataAt} = reported;
+  var newd = new NewData({
+  Temperature: Temperature,
+  Current: Current,
+  SelfTestInvoked: SelfTestInvoked,
+  SystemState: SystemState,
+});
+  newd.save().then((doc) => {
+  },(e) => {
+  console.log('b');
+  });
+}
+else if(state != null && desired != null)
+{
+  var {SelfTestInvoked} = desired;
+  var {SystemState} = desired;
+  console.log(SelfTestInvoked);
+  console.log(SystemState);
+}
+
+
+});
+
+DataSetting.find().sort({_id:-1}).limit(1).then((doc) => {
+  var tempd = doc[0];
+  var {SetTemperature} = tempd;
+  SetTemperatureHomePage = SetTemperature;
+});
+var HistoryData =[];
+NewData.find().sort({_id:-1}).limit(100).then((test) => {
+  for (var i = 0; i < test.length; i++) {
+    var temp = test[i];
+    var {Temperature} = temp;
+    HistoryData[i] = Temperature;
+  }
+  //console.log(HistoryData);
+});
 app.get('/Home',(req, res) => {
   res.render('Home.hbs', {
     pageTitle: 'Home Page',
-    currentYear: new Date().getFullYear()
+    currentYear: new Date().getFullYear(),
+    Temperature: TemperatureforHomePage,
+    SystemState: SystemModeforHomePage,
+    Current: CurrentforHomePage,
+    Power: SystemPower,
+    SetTemp: SetTemperatureHomePage
   });
 });
 
@@ -155,6 +223,7 @@ app.get('/diagnostic',(req, res) => {
     pageTitle: 'Diagnostic Page',
     currentYear: new Date().getFullYear()
   });
+  console.log('d');
 });
 
 app.get('/history',(req, res) => {

@@ -12,8 +12,8 @@
   {{> header}}
   <div>
    <h1>This the home Page</h1>
-
-   <table style="width:100%">
+<div id="lableTest">Hello</div>
+   <table id="StatusTable" style="width:100%">
      <tr>
        <th>selected temperature</th>
        <th>Current temperature</th>
@@ -22,19 +22,22 @@
        <th>System current usage</th>
      </tr>
      <tr>
-       <td>55 &ordm; C</td>
-       <td>55 &ordm; C</td>
-       <td>Automatic</td>
-       <td>On</td>
-       <td>10 A</td>
+       <td> {{SetTemp}} &ordm; C</td>
+       <td>{{Temperature}} &ordm; C</td>
+       <td>{{SystemState}}</td>
+       <td>{{Power}}</td>
+       <td>{{Current}} A</td>
      </tr>
    </table>
 
-
+<div id="time"> </div>
    <form id="Settings">
      <input type="text" name="Temperature" placeholder="Temp"/>
      <input  type="submit" name="button" value="Update"/>
    </form>
+   <h4>Set System Mode</h4>
+   <button id="Active" type="button" name="AutoButton">Automatic</button>
+   <button id= "InActive" type="button" name="InActiveButton">InActive</button>
  </div>
 
 <!-- This path is relative to ourer server.
