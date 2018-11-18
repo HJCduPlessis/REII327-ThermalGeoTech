@@ -12,21 +12,22 @@
   {{> header}}
   <div>
    <h1>This the home Page</h1>
-<div id="lableTest">Hello</div>
    <table id="StatusTable" style="width:100%">
      <tr>
-       <th>selected temperature</th>
-       <th>Current temperature</th>
-       <th>System mode</th>
-       <th>System state</th>
-       <th>System current usage</th>
+       <th>Selected Temperature (&ordm;C) </th>
+       <th>Current Temperature  (&ordm;C)</th>
+       <th>System Mode</th>
+       <th>System State</th>
+       <th>System Current Usage (A) </th>
+       <th>Connection State </th>
      </tr>
      <tr>
-       <td> {{SetTemp}} &ordm; C</td>
-       <td>{{Temperature}} &ordm; C</td>
-       <td>{{SystemState}}</td>
-       <td>{{Power}}</td>
-       <td>{{Current}} A</td>
+       <td id ="SetTemperatureDisplay"></td>
+       <td id ="TemperatureDisplay"></td>
+       <td id ="SystemStateDisplay"></td>
+       <td id ="PowerDisplay"></td>
+       <td id ="CurrentDisplay"></td>
+       <td id ="connectionDisplay"></td>
      </tr>
    </table>
 

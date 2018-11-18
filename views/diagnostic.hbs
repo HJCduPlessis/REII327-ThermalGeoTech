@@ -10,8 +10,26 @@
 </head>
 <body class="reii327">
   {{> header}}
+  <div id="time"> </div>
   <div>
    <p>This the Diagnostic Page</p>
+   <button id="DiagnosticButton" type="button" name="RunDiagnostic">Run Diagnostic</button>
+   <table id="StatusTable" style="width:100%">
+     <tr>
+       <th>Status</th>
+       <th>Old Average</th>
+       <th>New  Average</th>
+       <th>Old Max</th>
+       <th>New Max </th>
+     </tr>
+     <tr>
+       <td id ="StatusDisplay"></td>
+       <td id ="OldAvgDisplay"></td>
+       <td id ="NewAvgDisplay"></td>
+       <td id ="OldMaxDisplay"></td>
+       <td id ="NewMaxtDisplay"></td>
+     </tr>
+   </table>
  </div>
 <!-- This path is relative to ourer server.
 The next command we are loading the labary. This will be used to inithate a connection-->

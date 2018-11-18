@@ -1,5 +1,6 @@
 var socket = io(); // <!-- is a method from the lb Create the connection -->
-
+var i =0;
+var oldData;
 socket.on('connect', function () {
   console.log(`Connected to server`);
 });
@@ -7,18 +8,37 @@ socket.on('connect', function () {
 socket.on('disconnect', function () {
   console.log(`Disconnect from server`);
 });
+socket.on('RecivedNewData',function(data){
+  var {TestSendUpdatData} = data;
+  var {Temperature} = TestSendUpdatData;
+  oldData = Temperature;
+  var {SystemState}  = TestSendUpdatData;
+  var {Current}  = TestSendUpdatData;
+  var {Power}  = TestSendUpdatData;
+  var {SetTemp} = TestSendUpdatData;
+  var {flagConnection} = TestSendUpdatData;
+  // console.log(data,Temperature);
+  document.getElementById('SetTemperatureDisplay').innerHTML = SetTemp;
+  document.getElementById('TemperatureDisplay').innerHTML = Temperature;
+  document.getElementById('SystemStateDisplay').innerHTML = SystemState;
+  document.getElementById('PowerDisplay').innerHTML = Power;
+  document.getElementById('CurrentDisplay').innerHTML = Current;
+  document.getElementById('connectionDisplay').innerHTML = flagConnection;
+});
   function updateClock() {
+    i++;
       var now = new Date(), // current date
-          months = ['January', 'February', '...']; // you get the idea
+          months = ['January', 'February', 'March', 'April', 'May','June', 'July', 'August', 'September', 'October', 'November', 'December']; // you get the idea
           time = now.getHours() + ':' + now.getMinutes() +':' +now.getSeconds(), // again, you get the idea
-
-          // a cleaner way than string concatenation
           date = [now.getDate(),
                   months[now.getMonth()],
                   now.getFullYear()].join(' ');
-
-      // set the content of the element with the ID time to the formatted string
       document.getElementById('time').innerHTML = [date, time].join(' / ');
+      socket.emit('SendUpdatData', {
+        ValueSet: 'WantData'
+      }, function () {
+
+        });
       setTimeout(updateClock, 1000);
   }
   updateClock();
@@ -26,12 +46,12 @@ socket.on('disconnect', function () {
 
 $('#Emergency').on('submit', function (e) {
   e.preventDefault();
-
   socket.emit('EmergencyShutDown', {
-    envokedFrom: 'Home Page',
+    envokedFrom: 'Diagnostic Page',
   }, function () {
 
   });
+
 });
 $("#Settings").on('submit',function(e) {
   e.preventDefault();
@@ -40,7 +60,6 @@ $("#Settings").on('submit',function(e) {
   }, function () {
 
     });
-    jQuery('#lableTest').text('label');
   });
   $("#Active").click('button',function(e) {
     e.preventDefault();

@@ -11,8 +11,10 @@ const socketIO = require('socket.io');
  var {NewData} = require('./models/newdata');
  var {User} = require('./models/users');
  var {DataSetting} = require('./models/datasetting');
+ var {Currentdiacnostic} = require('./models/currentdiacnostic');
+ var {TempDiacnostic1} = require('./models/tempdiacnostic');
  var awsIot = require('aws-iot-device-sdk');
-
+ var flagConnection = false;
 var thingShadows = awsIot.thingShadow({
    keyPath: 'server/56eab5f35a-private.pem.key',
   certPath: 'server/56eab5f35a-certificate.pem.crt',
@@ -73,6 +75,12 @@ io.on('connection', (socket) => {
   });
   socket.on('EmergencyShutDown', (ESD) => {
     console.log('EmergencyShutDown', ESD);
+    var modeg = {"state":{"desired":{"EmergencyStop":true}}};
+    clientTokenUpdate = thingShadows.update('ThermoGeotechPi', modeg);
+    if (clientTokenUpdate === null)
+    {
+       console.log('update shadow failed, operation still in progress');
+    }
     });
     socket.on('DiagnodticEnvoked',(DED) => {
       console.log('DiagnodticEnvoked', DED);
@@ -80,7 +88,27 @@ io.on('connection', (socket) => {
   socket.on('SelfTestEnvoked',(STE) => {
     console.log('SelfTestEnvoked', STE);
 });
-
+socket.on('SendUpdatData',(SUD) => {
+  var TestSendUpdatData = DataCollected();
+  // console.log(TestSendUpdatData);
+  socket.emit('RecivedNewData',{
+    TestSendUpdatData
+  })
+});
+socket.on('SendUpdatDataDiacnostic',(SUD) => {
+  var SendUpdatDataDiacnostic = RunDiagnosticDataCompare();
+  // console.log(TestSendUpdatData);
+  socket.emit('RecivedNewDiacnostic',{
+    SendUpdatDataDiacnostic
+  })
+});
+socket.on('StartUpRequest',(SUR) => {
+  console.log(SUR);
+  var TempHistoryData =GetHistoryData();
+  socket.emit('HistoryRequest',{
+    TempHistoryData
+  })
+});
 socket.on('AutoMaticMode',(AMM) => {
   var oldMode;
   DataSetting.find().sort({_id:-1}).limit(1).then((doc) => {
@@ -116,8 +144,6 @@ socket.on('AutoMaticMode',(AMM) => {
     });
     }
   });
-
-
 });
 socket.on('HistorySearch',(HS) =>{
   console.log(HS);
@@ -157,7 +183,7 @@ thingShadows.on('foreignStateChange',
 function (thingName, operation, stateObject) {
 // console.log('received on '+thingName+':'+JSON.stringify(stateObject));
 // console.log('');
-
+flagConnection =true;
 var {state} = stateObject;
 var {reported} = state;
 var {desired} = state;
@@ -188,33 +214,159 @@ else if(state != null && desired != null)
   console.log(SelfTestInvoked);
   console.log(SystemState);
 }
-
-
 });
+var TemperatureforHomePage;
+var SystemModeforHomePage;
+var CurrentforHomePage;
+var SystemPower;
+var SetTemperatureHomePage;
 
-DataSetting.find().sort({_id:-1}).limit(1).then((doc) => {
-  var tempd = doc[0];
-  var {SetTemperature} = tempd;
-  SetTemperatureHomePage = SetTemperature;
-});
-var HistoryData =[];
-NewData.find().sort({_id:-1}).limit(100).then((test) => {
-  for (var i = 0; i < test.length; i++) {
-    var temp = test[i];
-    var {Temperature} = temp;
-    HistoryData[i] = Temperature;
-  }
-  //console.log(HistoryData);
-});
-app.get('/Home',(req, res) => {
-  res.render('Home.hbs', {
-    pageTitle: 'Home Page',
-    currentYear: new Date().getFullYear(),
+function DataCollected() {
+  NewData.find().sort({_id:-1}).limit(1).then((test) => {
+    var obj = test[0];
+    var {Temperature} = obj;
+    var {SystemState} = obj;
+    var {Current} = obj;
+    if(SystemState)
+    {
+       SystemModeforHomePage = "Automatic";
+    }
+    else {
+      SystemModeforHomePage = "InActive";
+    }
+    TemperatureforHomePage = Temperature;
+    CurrentforHomePage = Current;
+    if(Current > 0){
+      SystemPower = "On";
+    }
+    else {
+      SystemPower = "Off";
+    }
+
+  });
+  DataSetting.find().sort({_id:-1}).limit(1).then((doc) => {
+    var tempd = doc[0];
+    var {SetTemperature} = tempd;
+    SetTemperatureHomePage = SetTemperature;
+  });
+  return {
     Temperature: TemperatureforHomePage,
     SystemState: SystemModeforHomePage,
     Current: CurrentforHomePage,
     Power: SystemPower,
-    SetTemp: SetTemperatureHomePage
+    SetTemp: SetTemperatureHomePage,
+    flagConnection: flagConnection
+  }
+}
+var HistoryData =[];
+function GetHistoryData() {
+  NewData.find().sort({_id:-1}).limit(1000).then((test) => {
+    for (var i = 0; i < test.length; i++) {
+      var temp = test[i];
+      var {Temperature} = temp;
+      var y = Temperature;
+      var {_id} = temp;
+      var x = i;
+      HistoryData[i] = {x,y};
+    }
+  });
+  return HistoryData
+}
+var newDiacnosticData = [];
+var oldDiacnosticData = [];
+var oldMax ;
+var newMax ;
+var oldAvg ;
+var newAvg ;
+var condition;
+var avg;
+var max;
+function RunDiagnosticDataCompare() {
+  NewData.find().sort({_id:1}).limit(100).then((DiagnosticDataOld) => {
+    for (var i = 0; i < DiagnosticDataOld.length; i++) {
+      var temp = DiagnosticDataOld[i];
+      var {Current} = temp;
+      var y = Current;
+
+      if(y != 0){
+        oldDiacnosticData[i] = y;
+
+      }
+
+
+    }
+    for (var i = 0; i < oldDiacnosticData.length; i++) {
+      if(i == 0){
+        oldMax =oldDiacnosticData[i];
+        oldAvg = oldDiacnosticData[i];
+      }
+      else{
+        if(oldDiacnosticData[i] > oldMax){
+          oldMax = oldDiacnosticData[i];
+        }
+        var olddata = oldAvg;
+        oldAvg = oldDiacnosticData[i]+olddata;
+      }
+    }
+    oldAvg = oldAvg/oldDiacnosticData.length;
+  });
+  NewData.find().sort({_id:-1}).limit(100).then((DiagnosticDataNew) => {
+    for (var i = 0; i < DiagnosticDataNew.length; i++) {
+      var temp = DiagnosticDataNew[i];
+      var {Current} = temp;
+      var y = Current;
+      if(y != 0){
+        newDiacnosticData[i] = y;
+        //console.log(newDiacnosticData[i]);
+      }
+    }
+    for (var i = 0; i < newDiacnosticData.length; i++) {
+      if(i == 0){
+        newMax =newDiacnosticData[i];
+        newAvg = newDiacnosticData[i];
+      }
+      else{
+        if(newDiacnosticData[i] > oldMax){
+          newMax = newDiacnosticData[i];
+        }
+        var olddata = newAvg;
+        newAvg = newDiacnosticData[i]+olddata;
+      }
+    }
+    newAvg = newAvg/newDiacnosticData.length;
+    avg = oldAvg - newAvg;
+    max = oldMax- newMax;
+    if(avg >= 0){condition = 'Great';}
+    else if(avg < 0){
+      var persentage =(-1)*avg/oldAvg*100;
+      if(persentage < 10)
+      {
+        condition = 'Good';
+      }
+      else if (persentage >= 10 && persentage < 20) {
+        condition = 'Okay';
+      }
+      else if (persentage >= 20 && persentage < 40) {
+        condition = 'Bad';
+      }
+      else{
+        condition = 'Worst';
+      }
+      }
+    else if (true) {}
+  });
+return {
+  Condition: condition,
+  OldMaxIs: oldMax,
+  OldAvgIs: oldAvg,
+  NewAvgIs: newAvg,
+  NewMaxIs: newMax
+}
+}
+app.get('/Home',(req, res) => {
+  res.render('Home.hbs', {
+    pageTitle: 'Home Page',
+    currentYear: new Date().getFullYear()
   });
 });
 
