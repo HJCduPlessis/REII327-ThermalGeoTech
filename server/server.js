@@ -9,7 +9,6 @@ const socketIO = require('socket.io');
 
  var {mongoose} = require('./db/mongoose');
  var {NewData} = require('./models/newdata');
- var {User} = require('./models/users');
  var {DataSetting} = require('./models/datasetting');
  var {Currentdiacnostic} = require('./models/currentdiacnostic');
  var {TempDiacnostic1} = require('./models/tempdiacnostic');
@@ -87,9 +86,16 @@ io.on('connection', (socket) => {
   });
   socket.on('SelfTestEnvoked',(STE) => {
     console.log('SelfTestEnvoked', STE);
+    var modeg = {"state":{"desired":{"SelfTestInvoked":true}}};
+    clientTokenUpdate = thingShadows.update('ThermoGeotechPi', modeg);
+    if (clientTokenUpdate === null)
+    {
+       console.log('update shadow failed, operation still in progress');
+    }
 });
 socket.on('SendUpdatData',(SUD) => {
-  var TestSendUpdatData = DataCollected();
+  var {oldvalue} = SUD;
+  var TestSendUpdatData = DataCollected(oldvalue);
   // console.log(TestSendUpdatData);
   socket.emit('RecivedNewData',{
     TestSendUpdatData
@@ -102,8 +108,7 @@ socket.on('SendUpdatDataDiacnostic',(SUD) => {
     SendUpdatDataDiacnostic
   })
 });
-socket.on('StartUpRequest',(SUR) => {
-  console.log(SUR);
+socket.on('HistoryRequestdata',(SUR) => {
   var TempHistoryData =GetHistoryData();
   socket.emit('HistoryRequest',{
     TempHistoryData
@@ -122,7 +127,7 @@ socket.on('AutoMaticMode',(AMM) => {
     var oldcount = 0;
     if(mode){newcount =1}
     if(oldMode){oldcount = 1}
-    if(oldcount != newcount){
+    if(true){
 
        var modeg = {"state":{"desired":{"SystemState":mode}}};
        console.log(mode);
@@ -181,8 +186,8 @@ socket.on('ChangeData',(CD) =>{
 
 thingShadows.on('foreignStateChange',
 function (thingName, operation, stateObject) {
-// console.log('received on '+thingName+':'+JSON.stringify(stateObject));
-// console.log('');
+console.log('received on '+thingName+':'+JSON.stringify(stateObject));
+console.log('');
 flagConnection =true;
 var {state} = stateObject;
 var {reported} = state;
@@ -221,11 +226,14 @@ var CurrentforHomePage;
 var SystemPower;
 var SetTemperatureHomePage;
 
-function DataCollected() {
+function DataCollected(data) {
   NewData.find().sort({_id:-1}).limit(1).then((test) => {
     var obj = test[0];
     var {Temperature} = obj;
     var {SystemState} = obj;
+    var {_id} = obj;
+    // console.log(_id.getTimestamp());
+    // console.log(new Date());
     var {Current} = obj;
     if(SystemState)
     {
@@ -235,6 +243,8 @@ function DataCollected() {
       SystemModeforHomePage = "InActive";
     }
     TemperatureforHomePage = Temperature;
+    // console.log(data);
+    if(data == Temperature){flagConnection = false; }
     CurrentforHomePage = Current;
     if(Current > 0){
       SystemPower = "On";
@@ -260,10 +270,10 @@ function DataCollected() {
 }
 var HistoryData =[];
 function GetHistoryData() {
-  NewData.find().sort({_id:-1}).limit(1000).then((test) => {
+  NewData.find().sort({_id:-1}).limit(6000).then((test) => {
     for (var i = 0; i < test.length; i++) {
       var temp = test[i];
-      var {Temperature} = temp;
+      var {Current} = temp;
       var y = Temperature;
       var {_id} = temp;
       var x = i;
@@ -288,7 +298,7 @@ function RunDiagnosticDataCompare() {
       var {Current} = temp;
       var y = Current;
 
-      if(y != 0){
+      if(y >= 0.5){
         oldDiacnosticData[i] = y;
 
       }
@@ -315,7 +325,7 @@ function RunDiagnosticDataCompare() {
       var temp = DiagnosticDataNew[i];
       var {Current} = temp;
       var y = Current;
-      if(y != 0){
+      if(y >= 0.5){
         newDiacnosticData[i] = y;
         //console.log(newDiacnosticData[i]);
       }

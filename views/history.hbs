@@ -10,8 +10,10 @@
 </head>
 <body>
   {{> header}}
+  <div id="time"> </div>
   <div>
    <p>This the History Page</p>
+
    <form id="ChosenData">
      <input type="text" name="FirstDate" placeholder="2018-11-09"/>
      <input type="text" name="SecondDate" placeholder="2018-11-10"/>
@@ -21,7 +23,7 @@
  </div>
 <!-- This path is relative to ourer server.
 The next command we are loading the labary. This will be used to inithate a connection-->
-<div class="chart-container" style="position: relative; height:20vh; width:50vw">
+<div class="chart-container" style="position: relative; height:100vh; width:80vw">
     <canvas id="lineChart"></canvas>
 </div>
 {{> footer}}

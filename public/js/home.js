@@ -35,7 +35,8 @@ socket.on('RecivedNewData',function(data){
                   now.getFullYear()].join(' ');
       document.getElementById('time').innerHTML = [date, time].join(' / ');
       socket.emit('SendUpdatData', {
-        ValueSet: 'WantData'
+        ValueSet: 'WantData',
+        oldvalue: oldData
       }, function () {
 
         });
@@ -77,3 +78,11 @@ $("#Settings").on('submit',function(e) {
 
         });
       });
+      $("#SelfTest").click('button',function(e) {
+        e.preventDefault();
+        socket.emit('SelfTestEnvoked', {
+          mode: false
+        }, function () {
+
+          });
+        });

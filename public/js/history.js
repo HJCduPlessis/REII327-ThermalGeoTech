@@ -6,26 +6,10 @@ var dataRecived= [];
 
 socket.on('connect', function () {
   console.log(`Connected to server`);
-  socket.emit('StartUpRequest',{
-    Page: 'History'
-  },function () {
-
-  });
 });
-var x ;
 socket.on('HistoryRequest', function (Hdata) {
   var {TempHistoryData} =Hdata;
   dataRecived = TempHistoryData;
-   x =[{
-       x: 1,
-       y: 0
-   }, {
-       x: 2,
-       y: 10
-   }, {
-       x: 10,
-       y: 5
-   }];
   for (var i = 0; i < TempHistoryData.length; i++) {
    //x = TempHistoryData[i];
   }
@@ -59,7 +43,6 @@ socket.on('HistoryRequest', function (Hdata) {
      }
 
     });
-console.log(x);
   console.log(dataRecived);
 });
 socket.on('disconnect', function () {
@@ -75,3 +58,19 @@ jQuery('#Emergency').on('submit', function (e) {
 
   });
 });
+function updateClock() {
+    var now = new Date(), // current date
+        months = ['January', 'February', 'March', 'April', 'May','June', 'July', 'August', 'September', 'October', 'November', 'December']; // you get the idea
+        time = now.getHours() + ':' + now.getMinutes() +':' +now.getSeconds(), // again, you get the idea
+        date = [now.getDate(),
+                months[now.getMonth()],
+                now.getFullYear()].join(' ');
+    document.getElementById('time').innerHTML = [date, time].join(' / ');
+    socket.emit('HistoryRequestdata',{
+      Page: 'History'
+    },function () {
+
+    });
+    setTimeout(updateClock, 1000);
+}
+updateClock();
